@@ -16,7 +16,7 @@
 
         app:layout_constraintVertical_bias="0.0"
         app:title="SMS READER"
-        app:titleTextColor="#FBF9F9"
+        app:titleTextColor="#040404"
         tools:ignore="MissingConstraints"
         tools:layout_editor_absoluteX="3dp" />
 
@@ -25,10 +25,12 @@
         android:layout_height="match_parent"
         android:layout_below="@+id/toolbar"
         android:layout_marginTop="-4dp"
-        android:background="@color/black"
+        android:background="#E8E2E2"
+
         android:id="@+id/recyclerview"
         tools:ignore="UnknownId"
         tools:layout_editor_absoluteX="149dp"
         tools:layout_editor_absoluteY="217dp" />
+
 
 </RelativeLayout>

@@ -1,37 +1,38 @@
 package com.example.smsreader;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.Loader;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.Manifest;
-import android.content.DialogInterface;
-import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.net.Uri;
-import android.os.AsyncTask;
-import android.os.Build;
-import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.widget.Toast;
-
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<ArrayList<Sms>> {
 
-    private int countOfPermissionDialog;
+    boolean countOfPermissionDialog=true;
+    int id=0;
+    int flag;
+    RecyclerAdapter adapter;
+    RecyclerView recyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar=findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
     }
@@ -40,18 +41,20 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         checkingForPermission();
     }
-    public void checkingForPermission(){
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) == PackageManager.PERMISSION_DENIED && countOfPermissionDialog == 0) {
+
+    public void checkingForPermission() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) == PackageManager.PERMISSION_DENIED && countOfPermissionDialog) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_SMS}, 4);
-            countOfPermissionDialog++;
-        } else if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) == PackageManager.PERMISSION_DENIED && countOfPermissionDialog != 0) {
+            countOfPermissionDialog=false;
+        } else if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) == PackageManager.PERMISSION_DENIED && !countOfPermissionDialog) {
             displayDialog();
 
-        }
-        else{
+        } else {
+            flag=0;
             ReadSms();
         }
     }
+
     public void displayDialog() {
 
 
@@ -60,79 +63,75 @@ public class MainActivity extends AppCompatActivity {
         builder.setTitle("Permission Denied");
         builder.setCancelable(false);
 
-        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_SMS}, 4);
-                dialog.cancel();
-            }
-
+        builder.setPositiveButton("Yes", (dialog, which) -> {
+            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_SMS}, 4);
+            dialog.cancel();
         });
 
-        builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                finish();
-            }
-
-        });
+        builder.setNegativeButton("No", (dialog, which) -> finish());
 
         AlertDialog alertDialog = builder.create();
         alertDialog.show();
     }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu,menu);
+        getMenuInflater().inflate(R.menu.menu, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        int id=item.getItemId();
-        if(id==R.id.refresh){
-            setContentView(R.layout.activity_main);
-            Toolbar toolbar=findViewById(R.id.toolbar);
-            setSupportActionBar(toolbar);
+        int id = item.getItemId();
+        if (id == R.id.refresh) {
             ReadSms();
         }
         return true;
     }
 
-        public void ReadSms() {
-            ArrayList<Sms> sms=new ArrayList<>();
-            MySync mySync=new MySync();
-            mySync.execute(sms);
-        }
-
-        class MySync extends AsyncTask<ArrayList<Sms>,Integer,ArrayList<Sms>>{
+    public void ReadSms() {
+        id++;
+        Log.d("ReadSms","--------------------------------------");
+        LoaderManager.getInstance(this).initLoader(id,null,this);
 
 
-        @Override
-        protected ArrayList<Sms> doInBackground(ArrayList<Sms>... arrayLists) {
-            ArrayList<Sms> sms=arrayLists[0];
-            Cursor c = getContentResolver().query(Uri.parse("content://sms/inbox"), null, null, null, null);
-            c.moveToFirst();
-
-            for (int i = 0; i < c.getCount(); i++) {
-
-                String mobile = c.getString(c.getColumnIndexOrThrow("address")).toString();
-
-                String message = c.getString(c.getColumnIndexOrThrow("body")).toString();
-
-                sms.add(new Sms(mobile,message));
-                c.moveToNext();
-            }
-            //adapter.notifyDataSetChanged();
-            return sms;
-        }
+    }
+    @NonNull
+    @Override
+    public Loader<ArrayList<Sms>> onCreateLoader(int id, @Nullable Bundle args) {
+        Log.d("onCreateLoader","--------------------------------------");
+        return new AsyncLoader(this);
+    }
 
     @Override
-    protected void onPostExecute(ArrayList<Sms> sms) {
-        RecyclerView recyclerView=findViewById(R.id.recyclerview);
-        RecyclerAdapter adapter=new RecyclerAdapter();
-        adapter.setter(sms);
-        recyclerView.setAdapter(adapter);
-        recyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
+    public void onLoadFinished(@NonNull Loader<ArrayList<Sms>> loader, ArrayList<Sms> data) {
+        if(flag==0) {
+
+            recyclerView = findViewById(R.id.recyclerview);
+            adapter = new RecyclerAdapter(data);
+            recyclerView.setAdapter(adapter);
+            recyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
+            flag=1;
+        } else{
+
+            adapter.setter(data);
+            recyclerView.setAdapter(adapter);
+            recyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
+        }
+        LoaderManager.getInstance(this).destroyLoader(id);
     }
+
+    @Override
+    public void onLoaderReset(@NonNull Loader<ArrayList<Sms>> loader) {
+        Log.d("onLoaderReset","--------------------------------------");
+    }
+
+
 }
-}
+
+
+
+
+
+
+
