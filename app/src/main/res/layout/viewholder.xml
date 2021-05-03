@@ -4,32 +4,22 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:paddingLeft="1dp"
-    android:paddingBottom="0.1dp"
     android:background="@drawable/rectangle"
     android:layout_marginRight="100dp"
     android:layout_marginTop="30dp"
+    android:layout_marginBottom="20dp"
+    android:id="@+id/reletivelayout"
     app:layout_constraintCircleRadius="100dp">
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/number"
-        android:text="Number"
 
-        android:textAlignment="center"
-        android:textColor="#03A9F4"
-
-
-        android:textSize="17sp"/>
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#EAE4E4"
-            android:paddingRight="20dp"
-            android:paddingBottom="20dp"
-            android:paddingLeft="20dp"
-            android:layout_below="@+id/number"
+            android:textColor="@color/white"
+            android:paddingRight="10dp"
+            android:paddingBottom="10dp"
+            android:paddingLeft="10dp"
+            android:paddingTop="10dp"
             android:id="@+id/body"
             android:text="Message"
             android:textSize="15dp"
